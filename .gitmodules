@@ -1,0 +1,3 @@
+[submodule "liblali"]
+	path = liblali
+	url = git@github.com:massix/liblali.git
