@@ -16,6 +16,8 @@
 #include "game.h"
 #include "database.h"
 #include <sqlite3.h>
+#include <web.h>
+#include <config.h>
 
 #define BGG_URL "bgg-json.azurewebsites.net"
 
@@ -79,6 +81,15 @@ int main(int argc, char *argv[])
   for (auto & expansion : exp) {
     std::cout << " - " << expansion.getGameName() << "\n";
   }
+
+  todo::config config("./conf/tdj-crawler.conf");
+  if (config.parse_config()) {
+    std::cout << "Ready to go!\n";
+  }
+  
+  todo::web server(&config);
+
+  server.run();
 
   return 0;
 }
