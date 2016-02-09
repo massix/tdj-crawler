@@ -38,7 +38,6 @@ int main(int argc, char *argv[])
   l_users.push_back(bgg_client::data::user("Chakado", "Chakado"));
   l_users.push_back(bgg_client::data::user("Pyvert", "Pyvert"));
   l_users.push_back(bgg_client::data::user("Platypus_Lord", "Flo"));
-  l_users.push_back(bgg_client::data::user("dizzark", "DanieleTascini"));
 
   bgg_client::response response;
 
