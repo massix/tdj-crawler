@@ -18,6 +18,7 @@
 #include <sqlite3.h>
 #include <web.h>
 #include <config.h>
+#include <flate.h>
 
 #define BGG_URL "bgg-json.azurewebsites.net"
 
@@ -37,6 +38,7 @@ int main(int argc, char *argv[])
   l_users.push_back(bgg_client::data::user("Chakado", "Chakado"));
   l_users.push_back(bgg_client::data::user("Pyvert", "Pyvert"));
   l_users.push_back(bgg_client::data::user("Platypus_Lord", "Flo"));
+  l_users.push_back(bgg_client::data::user("dizzark", "DanieleTascini"));
 
   bgg_client::response response;
 
@@ -88,6 +90,100 @@ int main(int argc, char *argv[])
   }
   
   todo::web server(&config);
+
+  // There should be only a single servlet
+  auto const & servlet = config.getServlets().front();
+
+//  std::cout << "servlet resources and templates: " << servlet["resources"] << " " << servlet["templates"] << "\n";
+
+  // Register the main servlet.
+  todo::web::servlet_t games_servlet = [&](std::string const & p_page, todo::url::cgi_t const & p_cgi, todo::http_request & p_request)->std::string {
+    std::string ret;
+    std::string content_type = "text/html";
+    p_request.m_code = todo::http_request::kOkay;
+
+    Flate * flate = nullptr;
+    flateSetFile(&flate, std::string(servlet["templates"] + "games_template.html").c_str());
+
+    for (auto const & g : no_expansions) {
+      std::string string_owners;
+      flateSetVar(flate, "game_name", g.getGameName().c_str());
+      flateSetVar(flate, "game_description", g.getDescription().c_str());
+      flateSetVar(flate, "game_thumbnail", g.getThumbnailUrl().c_str());
+
+      std::string game_url = "http://boardgamegeek.com/boardgame/" + std::to_string(g.getGameId());
+      flateSetVar(flate, "game_url", game_url.c_str());
+
+      std::vector<bgg_client::data::user> owners;
+      db.users_for_game(owners, g);
+
+      for (auto const & user : owners) {
+        std::string bgg_url = "http://boardgamegeek.com/user/" + user.getBggNick();
+        string_owners += user.getForumNick() + " (" +
+          "<a href=\"" + bgg_url + "\">" +
+          user.getBggNick() + "</a>), ";
+      }
+
+      // Remove last ","
+      string_owners = string_owners.substr(0, string_owners.find_last_of(","));
+
+      flateSetVar(flate, "game_owners", string_owners.c_str());
+      flateDumpTableLine(flate, "games_accordion");
+    }
+
+    ret = flatePage(flate);
+    return ret;
+  };
+
+  server.insert(servlet["address"], games_servlet);
+
+//  // Register a dump configuration servlet
+//  m_servlets["/debug/"] = [&](std::string const & p_page, url::cgi_t const & p_cgi, http_request & p_request)->std::string {
+//    std::string l_ret;
+//    std::string l_contentType = "text/html";
+//    p_request.m_code = http_request::kOkay;
+//
+//    if (p_page.empty()) {
+//      Flate * l_flate = NULL;
+//      flateSetFile(&l_flate, std::string(m_templates + "debug_template.html").c_str());
+//
+//      for (config::value_type const & c_key : (*m_config)) {
+//        flateSetVar(l_flate, "key", c_key.first.c_str());
+//        flateSetVar(l_flate, "value", c_key.second.c_str());
+//        flateDumpTableLine(l_flate, "config");
+//      }
+//
+//      for (url::cgi_t::value_type const & l_value : p_cgi) {
+//        if (l_value.first != "submit") {
+//          flateSetVar(l_flate, "cgi_key", l_value.first.c_str());
+//          flateSetVar(l_flate, "cgi_value", l_value.second.c_str());
+//          flateDumpTableLine(l_flate, "cgi");
+//        }
+//      }
+//
+//      for (servlet const & l_servlet : m_config->getServlets()) {
+//        flateSetVar(l_flate, "servlet_name", l_servlet["name"].c_str());
+//
+//        for (servlet::value_type const & l_value : l_servlet) {
+//          flateSetVar(l_flate, "servlet_key", l_value.first.c_str());
+//          flateSetVar(l_flate, "servlet_value", l_value.second.c_str());
+//          flateDumpTableLine(l_flate, "servlet_config");
+//        }
+//
+//        flateDumpTableLine(l_flate, "servlet_container");
+//      }
+//
+//      l_ret = flatePage(l_flate);
+//    }
+//    else if (not get_content_of_file(m_templates + p_page, l_ret, l_contentType)) {
+//      p_request.m_code = http_request::kNotFound;
+//      l_ret = "Page not found";
+//    }
+//
+//    p_request["Content-Type"] = l_contentType;
+//    return l_ret;
+//  };
+
 
   server.run();
 

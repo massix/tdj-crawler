@@ -349,7 +349,7 @@ void bgg_client::data::database::game_by_name(const std::string &name, bgg_clien
 void bgg_client::data::database::all_games(bgg_client::data::collection &collection)
 {
   std::string get_all_games;
-  get_all_games = "select id from games;";
+  get_all_games = "select id from games order by name asc;";
 
   sqlite3_exec(m_db, get_all_games.c_str(), get_all_games_callback, &collection, 0);
 
@@ -361,7 +361,7 @@ void bgg_client::data::database::all_games(bgg_client::data::collection &collect
 void bgg_client::data::database::all_games_no_expansions(bgg_client::data::collection &collection)
 {
   std::string get_all_games_query;
-  get_all_games_query = "select id from games where expands = 0";
+  get_all_games_query = "select id from games where expands = 0 order by name asc";
 
   sqlite3_exec(m_db, get_all_games_query.c_str(), get_all_games_callback, &collection, 0);
 
