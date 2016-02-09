@@ -39,6 +39,8 @@ public:
   void setAuthor(std::string const& author) { m_authors.push_back(author); }
   void setDescription(std::string const& description) { m_description = description; }
 
+  void setExpands(uint32_t const & id) { m_expands = id; }
+
   // Getters
   uint32_t const & getGameId() const { return m_gameId; }
   uint32_t const & getMinPlayers () const { return m_minPlayers; }
@@ -55,6 +57,8 @@ public:
   std::vector<std::string> const & getAuthors() const { return m_authors; }
   std::string const& getDescription() const { return m_description; }
 
+  uint32_t const & getExpands() const { return m_expands; }
+
 private:
   uint32_t m_gameId;
   uint32_t m_minPlayers;
@@ -70,6 +74,9 @@ private:
 
   std::vector<std::string> m_authors;
   std::string m_description;
+
+  /* Expands game id */
+  uint32_t m_expands;
 
 protected:
 };

@@ -32,6 +32,8 @@ private:
   std::vector<::bgg_client::data::game> m_games;
 
   bool m_valid;
+
+  void fill_game(json11::Json const & obj, bgg_client::data::game & game);
 };
 
 }

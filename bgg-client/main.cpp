@@ -62,21 +62,22 @@ int main(int argc, char *argv[])
     }
   }
 
-  std::vector<bgg_client::data::user> owners;
   bgg_client::data::collection all_games;
-  bgg_client::data::game game;
-
+  bgg_client::data::collection no_expansions;
   db.all_games(all_games);
+  db.all_games_no_expansions(no_expansions);
 
-  for (auto & g : all_games) {
-    db.users_for_game(owners, g);
-    std::cout << g.getGameName() << " (" << g.getGameId() << ")\n";
+  std::cout << all_games.size() << " total games in DB (expansions included)\n";
+  std::cout << no_expansions.size() << " total games in DB (no expansions)\n";
 
-    for (auto const & user : owners) {
-      std::cout << " -> " << user.getForumNick() << "\n";
-    }
+  bgg_client::data::game w;
+  bgg_client::data::collection exp;
+  db.game_by_name("7 Wonders", w);
+  db.expansions_for_game(w, exp);
 
-    std::cout << std::endl;
+  std::cout << "Expansions for game " << w.getGameName() << "\n";
+  for (auto & expansion : exp) {
+    std::cout << " - " << expansion.getGameName() << "\n";
   }
 
   return 0;

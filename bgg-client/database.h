@@ -56,6 +56,9 @@ public:
   /* Fills the game object for the game with the given id */
   void game_by_id(uint32_t const & id, game & game);
 
+  /* Fills the game object for the game with the given name */
+  void game_by_name(std::string const & name, game & game);
+
   /* Generic callback for the sqlite queries */
   int callback(int argc, char *argv[], char *columns[]);
 
@@ -67,6 +70,12 @@ public:
 
   /* Get all the games in the collection */
   void all_games(collection & collection);
+
+  /* Get only the games, not the expansions */
+  void all_games_no_expansions(collection & collection);
+
+  /* Get all the expansions for a given game */
+  void expansions_for_game(game const & game, collection & expansions);
 
 private:
   sqlite3 * m_db;

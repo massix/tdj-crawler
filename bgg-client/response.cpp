@@ -38,15 +38,7 @@ void bgg_client::response::initialize(const std::string &json_raw)
       for (auto &game : m_object->array_items()) {
         if (game["owned"].bool_value()) {
           bgg_client::data::game g;
-          g.setGameId(game["gameId"].int_value());
-          g.setMinPlayers(game["minPlayers"].int_value());
-          g.setMaxPlayers(game["maxPlayers"].int_value());
-          g.setPlayingTime(game["playingTime"].int_value());
-          g.setYearPublished(game["yearPublished"].int_value());
-          g.setRank(game["rank"].int_value());
-          g.setIsExtension(game["isExpansion"].bool_value());
-          g.setGameName(game["name"].string_value());
-          g.setThumbnailUrl(game["thumbnail"].string_value());
+          fill_game(game, g);
           m_games.push_back(g);
         }
       }
@@ -55,21 +47,33 @@ void bgg_client::response::initialize(const std::string &json_raw)
     // This has to be a game then.
     else if (not ((*m_object)["gameId"].type() == json11::Json::NUL)) {
       bgg_client::data::game g;
-      g.setGameId((*m_object)["gameId"].int_value());
-      g.setMinPlayers((*m_object)["minPlayers"].int_value());
-      g.setMaxPlayers((*m_object)["maxPlayers"].int_value());
-      g.setPlayingTime((*m_object)["playingTime"].int_value());
-      g.setYearPublished((*m_object)["yearPublished"].int_value());
-      g.setRank((*m_object)["rank"].int_value());
-      g.setIsExtension((*m_object)["isExpansion"].bool_value());
-      g.setGameName((*m_object)["name"].string_value());
-      g.setThumbnailUrl((*m_object)["thumbnail"].string_value());
-      g.setDescription((*m_object)["description"].string_value());
+      fill_game(*m_object, g);
       m_games.push_back(g);
     }
   }
 
   m_valid = error.empty();
+}
+
+void bgg_client::response::fill_game(const json11::Json &obj, bgg_client::data::game &game)
+{
+  game.setGameId(obj["gameId"].int_value());
+  game.setMinPlayers(obj["minPlayers"].int_value());
+  game.setMaxPlayers(obj["maxPlayers"].int_value());
+  game.setPlayingTime(obj["playingTime"].int_value());
+  game.setYearPublished(obj["yearPublished"].int_value());
+  game.setRank(obj["rank"].int_value());
+  game.setIsExtension(obj["isExpansion"].bool_value());
+  game.setGameName(obj["name"].string_value());
+  game.setThumbnailUrl(obj["thumbnail"].string_value());
+  game.setDescription(obj["description"].string_value());
+
+  if (game.isExtension() and not obj["expands"].array_items().empty()) {
+    game.setExpands(obj["expands"].array_items()[0]["gameId"].int_value());
+  }
+  else {
+    game.setExpands(0);
+  }
 }
 
 void bgg_client::response::reset()
