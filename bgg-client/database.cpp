@@ -311,7 +311,7 @@ void bgg_client::data::database::user_by_bggnick(const std::string &nick, bgg_cl
 void bgg_client::data::database::users_for_game(std::vector<bgg_client::data::user> &list, const bgg_client::data::game &game)
 {
   std::string get_users_for_game_query;
-  get_users_for_game_query = "select bggnick from users where games like '%" + std::to_string(game.getGameId()) + " %';";
+  get_users_for_game_query = "select bggnick from users where ' ' || games || ' ' like '% " + std::to_string(game.getGameId())+ " %';";
   list.clear();
 
   sqlite3_exec(m_db, get_users_for_game_query.c_str(), users_for_game_callback, &list, 0);
