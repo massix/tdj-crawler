@@ -11,12 +11,11 @@ liblali:
 	$(MAKE) -C liblali all
 
 deploy: bgg-client/tdj-crawler
-	mkdir bin
-	mkdir bin/conf
+	mkdir -p bin/conf
 	cp liblali/**/*.so bin/
 	cp bgg-client/tdj-crawler bin/
-	cp -r bgg-client/resources bin/
-	cp -r bgg-client/templates bin/
+	rm -fr bin/resources && cp -r bgg-client/resources bin/
+	rm -fr bin/templates && cp -r bgg-client/templates bin/
 	cp -r bgg-client/resources/tdj-crawler.conf bin/conf/
 	cp -r bgg-client/resources/tdj-crawler.users.conf bin/conf/
 

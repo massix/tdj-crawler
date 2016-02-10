@@ -36,20 +36,21 @@ todo::web * server_ptr = nullptr;
 
 int main(int argc, char *argv[])
 {
-	bgg_client::connection connection(BGG_URL);
-  bgg_client::data::database db("./test.db");
-  db.create_tables();
-
-  if (not connection.open_connection()) {
-    std::cerr << "Unable to connect to BGG\n";
-    exit(-1);
-	}
 
   todo::config config("./conf/tdj-crawler.conf");
   if (not config.parse_config()) {
     std::cerr << "Unable to parse configuration file\n";
     exit(-1);
   }
+
+	bgg_client::connection connection(BGG_URL);
+  bgg_client::data::database db(config["db_path"]);
+  db.create_tables();
+
+  if (not connection.open_connection()) {
+    std::cerr << "Unable to connect to BGG\n";
+    exit(-1);
+	}
 
   // Retrieve the list of users.
   std::vector<bgg_client::data::user> users_vector;
@@ -118,8 +119,8 @@ int main(int argc, char *argv[])
     db.all_games(all_games);
     db.all_games_no_expansions(no_expansions);
 
-    std::cout << all_games.size() << " total games in DB (expansions included)\n";
-    std::cout << no_expansions.size() << " total games in DB (no expansions)\n";
+    std::cout << " --- " << all_games.size() << " total games in DB (expansions included)\n";
+    std::cout << " --- " << no_expansions.size() << " total games in DB (no expansions)\n";
   };
 
   // Update DB the first time we run the server.
@@ -145,7 +146,9 @@ int main(int argc, char *argv[])
       "Because games matter.",
       "Simply the best!",
       "We won't bite you.",
-      "We accept Italians too!"
+      "We accept Italians too!",
+      "This is a beta version!",
+      "Fun every Friday!"
     };
 
     std::srand((uint32_t) time(0));
@@ -241,16 +244,23 @@ int main(int argc, char *argv[])
   // Register the background thread responsible of regularly updating the DB
   std::thread updater([&]() {
     uint32_t timeout = std::atoi(config["update_db_timeout"].c_str());
-    std::cout << " --- Timeout BGG: " << timeout << std::endl;
+    std::cout << " --- Timeout BGG for updater thread: " << timeout << std::endl;
+    uint32_t slept_time(0);
 
     while (server_running) {
-      sleep(timeout);
-      update_db_function();
+      sleep(1);
+
+      // We check every second in order to ensure a proper shutdown of the service
+      // When needed.
+      if (++slept_time >= timeout) {
+        update_db_function();
+        slept_time = 0;
+      }
     }
 
   });
 
-  std::cout << "Server running on port " << config["server_web_port"] << "\n";
+  std::cout << " --- Server running on port " << config["server_web_port"] << "\n";
   server.run();
   server_running = false;
 
