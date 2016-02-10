@@ -16,6 +16,8 @@
 #include <fstream>
 #include <cstring>
 #include <unistd.h>
+#include <signal.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "connection.h"
@@ -27,6 +29,9 @@
 #include "database.h"
 
 #define BGG_URL "bgg-json.azurewebsites.net"
+
+// Temporary workaround to gracefully stop the server until I don't find a proper solution.
+todo::web * server_ptr = nullptr;
 
 int main(int argc, char *argv[])
 {
@@ -191,9 +196,21 @@ int main(int argc, char *argv[])
   };
 
   server.insert(servlet["address"], games_servlet);
+  server_ptr = &server;
+
+  // Register signal handler as a lambda function.
+  auto signal_handler = [](int signal)->void {
+    std::cout << " -- Handler called, gracefully stopping server --\n";
+    if (server_ptr != nullptr) server_ptr->stop();
+  };
+
+  signal(SIGINT, signal_handler);
+  signal(SIGABRT, signal_handler);
+  signal(SIGKILL, signal_handler);
 
   std::cout << "Server running on port " << config["server_web_port"] << "\n";
   server.run();
 
+  std::cout << "Gracefully stopped server\n";
   return 0;
 }
