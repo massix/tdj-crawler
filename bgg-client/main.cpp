@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <thread>
 #include "connection.h"
 #include "request.h"
 #include "response.h"
@@ -58,59 +59,71 @@ int main(int argc, char *argv[])
     exit(-1);
   }
 
-  std::ifstream users_file(config["users_file"].c_str(), std::ifstream::in | std::ifstream::binary);
+  // Shared objects
+  bgg_client::data::collection no_expansions;
+  bgg_client::data::collection all_games;
 
-  while (not users_file.eof()) {
-    std::string user_info;
-    users_file >> user_info;
+  auto update_db_function = [&]()->void{
+    std::ifstream users_file(config["users_file"].c_str(), std::ifstream::in | std::ifstream::binary);
+    users_vector.clear();
 
-    if (user_info.empty()) continue;
+    while (not users_file.eof()) {
+      std::string user_info;
+      users_file >> user_info;
 
-    std::string bggnick = user_info.substr(0, user_info.find("|"));
-    std::string forumnick = user_info.substr(user_info.find("|") + 1, user_info.size());
+      if (user_info.empty()) continue;
 
-    users_vector.push_back(bgg_client::data::user(bggnick, forumnick));
-  }
+      std::string bggnick = user_info.substr(0, user_info.find("|"));
+      std::string forumnick = user_info.substr(user_info.find("|") + 1, user_info.size());
 
-  users_file.close();
+      users_vector.push_back(bgg_client::data::user(bggnick, forumnick));
+    }
 
-  bgg_client::response response;
+    users_file.close();
 
-  // Everytime we start the server we fetch the latest datas from BGG.
-  // This is to avoid to have an empty list in case of DB corruption.
-  for (auto & user : users_vector) {
-    response.reset();
+    bgg_client::response response;
 
-    std::cout << " --- Fetching bgg user " << user.getBggNick() << " | " << user.getForumNick() << "\n";
-    connection.send(bgg_client::request::collection(user.getBggNick()), response);
-    db.insert_update_user(user);
+    // Everytime we start the server we fetch the latest datas from BGG.
+    // This is to avoid to have an empty list in case of DB corruption.
+    for (auto & user : users_vector) {
+      response.reset();
 
-    if (response.is_valid()) {
-      for (auto & game : response.getGames()) {
-        db.user_owns_game(user, game);
+      std::cout << " --- Fetching bgg user `" << user.getBggNick() << "' `" << user.getForumNick() << "'\n";
+      connection.send(bgg_client::request::collection(user.getBggNick()), response);
+      db.insert_update_user(user);
 
-        if (not db.game_exists(game)) {
+      // Force an update of the users' collection after each refresh.
+      db.update_user_collection(user, user.getCollection());
 
-          // Query BGG to get more details about the game itself
-          bgg_client::response r;
-          connection.send(bgg_client::request::thing(game.getGameId()), r);
+      if (response.is_valid()) {
+        for (auto & game : response.getGames()) {
+          db.user_owns_game(user, game);
 
-          if (r.is_valid()) {
-            std::cout << " => Adding '" << r.getGames()[0].getGameName() << "' to the DB\n";
-            db.insert_update_game(r.getGames()[0]);
+          if (not db.game_exists(game)) {
+
+            // Query BGG to get more details about the game itself
+            bgg_client::response r;
+            connection.send(bgg_client::request::thing(game.getGameId()), r);
+
+            if (r.is_valid()) {
+              std::cout << " => Adding `" << r.getGames()[0].getGameName() << "' to the DB.. ";
+              db.insert_update_game(r.getGames()[0]);
+              std::cout << "done\n";
+            }
           }
         }
       }
     }
-  }
 
-  bgg_client::data::collection all_games;
-  bgg_client::data::collection no_expansions;
-  db.all_games(all_games);
-  db.all_games_no_expansions(no_expansions);
+    db.all_games(all_games);
+    db.all_games_no_expansions(no_expansions);
 
-  std::cout << all_games.size() << " total games in DB (expansions included)\n";
-  std::cout << no_expansions.size() << " total games in DB (no expansions)\n";
+    std::cout << all_games.size() << " total games in DB (expansions included)\n";
+    std::cout << no_expansions.size() << " total games in DB (no expansions)\n";
+  };
+
+  // Update DB the first time we run the server.
+  update_db_function();
 
   todo::web server(&config);
 
@@ -223,8 +236,25 @@ int main(int argc, char *argv[])
   signal(SIGABRT, signal_handler);
   signal(SIGKILL, signal_handler);
 
+  bool server_running(true);
+
+  // Register the background thread responsible of regularly updating the DB
+  std::thread updater([&]() {
+    uint32_t timeout = std::atoi(config["update_db_timeout"].c_str());
+    std::cout << " --- Timeout BGG: " << timeout << std::endl;
+
+    while (server_running) {
+      sleep(timeout);
+      update_db_function();
+    }
+
+  });
+
   std::cout << "Server running on port " << config["server_web_port"] << "\n";
   server.run();
+  server_running = false;
+
+  updater.join();
 
   std::cout << "Gracefully stopped server\n";
   return 0;

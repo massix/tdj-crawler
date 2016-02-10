@@ -231,8 +231,8 @@ void bgg_client::data::database::insert_update_game(const bgg_client::data::game
   std::string escapedName = game.getGameName();
   pos = 0;
   while ((pos = escapedName.find("\"", pos)) != std::string::npos) {
-    escapedName.replace(pos, 1, "\\\"");
-    pos += 1;
+    escapedName.replace(pos, 1, "\"\"");
+    pos += 2;
   }
 
   std::string authors;
@@ -242,8 +242,8 @@ void bgg_client::data::database::insert_update_game(const bgg_client::data::game
 
   pos = 0;
   while ((pos = authors.find("\"", pos)) != std::string::npos) {
-    authors.replace(pos, 1, "\\\"");
-    pos += 1;
+    authors.replace(pos, 1, "\"\"");
+    pos += 2;
   }
 
   authors = authors.substr(0, authors.find_last_of(","));
@@ -334,6 +334,7 @@ void bgg_client::data::database::user_by_bggnick(const std::string &nick, bgg_cl
 {
   std::string get_user_query;
   get_user_query = "select * from users where bggnick = \"" + nick + "\";";
+  user.accessCollection().clear();
 
   sqlite3_exec(m_db, get_user_query.c_str(), select_user_callback, &user, 0);
 }
@@ -380,6 +381,7 @@ void bgg_client::data::database::all_games(bgg_client::data::collection &collect
 {
   std::string get_all_games;
   get_all_games = "select id from games order by name asc;";
+  collection.clear();
 
   sqlite3_exec(m_db, get_all_games.c_str(), get_all_games_callback, &collection, 0);
 
@@ -392,6 +394,7 @@ void bgg_client::data::database::all_games_no_expansions(bgg_client::data::colle
 {
   std::string get_all_games_query;
   get_all_games_query = "select id from games where expands = 0 order by name asc";
+  collection.clear();
 
   sqlite3_exec(m_db, get_all_games_query.c_str(), get_all_games_callback, &collection, 0);
 
@@ -404,6 +407,7 @@ void bgg_client::data::database::expansions_for_game(const bgg_client::data::gam
 {
   std::string get_all_expansions_query;
   get_all_expansions_query = "select id from games where expands = " + std::to_string(game.getGameId()) + ";";
+  expansions.clear();
 
   sqlite3_exec(m_db, get_all_expansions_query.c_str(), get_all_games_callback, &expansions, 0);
 
