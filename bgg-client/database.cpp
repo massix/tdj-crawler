@@ -240,6 +240,12 @@ void bgg_client::data::database::insert_update_game(const bgg_client::data::game
     authors += author + ", ";
   }
 
+  pos = 0;
+  while ((pos = authors.find("\"", pos)) != std::string::npos) {
+    authors.replace(pos, 1, "\\\"");
+    pos += 1;
+  }
+
   authors = authors.substr(0, authors.find_last_of(","));
 
   insert_game_query =
@@ -257,7 +263,7 @@ void bgg_client::data::database::insert_update_game(const bgg_client::data::game
     + std::to_string(game.getRank()) + ", "
     + std::to_string(game.isExtension()) + ", "
     "'" + game.getThumbnailUrl() + "', "
-    "'" + authors + "', "
+    "\"" + authors + "\", "
     + std::to_string(game.getExpands()) + " "
     "where not exists("
     "select 1 from games where id = " + std::to_string(game.getGameId()) + ")"
