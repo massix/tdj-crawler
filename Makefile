@@ -18,7 +18,7 @@ deploy: bgg-client/tdj-crawler
 	cp -r bgg-client/resources bin/
 	cp -r bgg-client/templates bin/
 	cp -r bgg-client/resources/tdj-crawler.conf bin/conf/
-  cp -r bgg-client/resources/tdj-crawler.users.conf bin/conf/
+	cp -r bgg-client/resources/tdj-crawler.users.conf bin/conf/
 
 clean:
 	for d in $(SUBDIRS); do $(MAKE) -C $$d clean; done
