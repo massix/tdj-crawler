@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
         }
 
         // Remove last ","
-        exp_owners_string = string_owners.substr(0, string_owners.find_last_of(","));
+        exp_owners_string = exp_owners_string.substr(0, exp_owners_string.find_last_of(","));
         flateSetVar(flate, "expansion_owners", exp_owners_string.c_str());
 
         flateDumpTableLine(flate, "game_expansions");
