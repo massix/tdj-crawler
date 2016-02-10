@@ -155,7 +155,7 @@ static int get_all_games_callback(void *data, int argc ,char *argv[], char *colu
 bgg_client::data::database::database(std::string const & path)
   : m_db(nullptr), m_dbLocation(path)
 {
-  sqlite3_open(m_dbLocation.c_str(), &m_db);
+  sqlite3_open_v2(m_dbLocation.c_str(), &m_db, SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr);
 }
 
 bgg_client::data::database::~database()
@@ -410,4 +410,14 @@ void bgg_client::data::database::expansions_for_game(const bgg_client::data::gam
   for (auto& g: expansions) {
     game_by_id(g.getGameId(), g);
   }
+}
+
+void bgg_client::data::database::lock()
+{
+  sqlite3_mutex_enter(sqlite3_db_mutex(m_db));
+}
+
+void bgg_client::data::database::unlock()
+{
+  sqlite3_mutex_leave(sqlite3_db_mutex(m_db));
 }

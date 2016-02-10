@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
     std::string content_type = "text/html";
     p_request.m_code = todo::http_request::kOkay;
 
-    Flate * flate = nullptr;
+    Flate * flate = 0;
     flateSetFile(&flate, std::string(servlet["templates"] + "games_template.html").c_str());
 
     std::vector<std::string> random_greeters =
@@ -202,7 +202,11 @@ int main(int argc, char *argv[])
       flateDumpTableLine(flate, "games_accordion");
     }
 
-    ret = flatePage(flate);
+    char * buffer = flatePage(flate);
+    ret = std::string(buffer);
+    flateFreeMem(flate);
+
+    delete buffer;
     return ret;
   };
 

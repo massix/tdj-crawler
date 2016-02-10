@@ -77,6 +77,10 @@ public:
   /* Get all the expansions for a given game */
   void expansions_for_game(game const & game, collection & expansions);
 
+  /* Concurrency methods */
+  void lock();
+  void unlock();
+
 private:
   sqlite3 * m_db;
   std::string m_dbLocation;
