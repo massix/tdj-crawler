@@ -8,7 +8,7 @@ OBJECTS = connection.o request.o response.o game.o collection.o user.o database.
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CXX) -o $(TARGET) -L../liblali/web -llali -L../liblali/json11 -ljson11 -lsqlite3 $(OBJECTS)
+	$(CXX) -o $(TARGET) -L../liblali/web -L../liblali/json11 -L../liblali/flate -lflate -ljson11 -llali -lsqlite3 $(OBJECTS)
 
 %.cpp: %.o
 
