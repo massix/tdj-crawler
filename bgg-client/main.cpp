@@ -136,6 +136,7 @@ int main(int argc, char *argv[])
     };
 
     std::srand((uint32_t) time(0));
+    flateSetVar(flate, "random_greet", random_greeters[(std::rand() % random_greeters.size())].c_str());
 
     for (auto const & g : no_expansions) {
       std::string string_owners;
@@ -144,7 +145,17 @@ int main(int argc, char *argv[])
       flateSetVar(flate, "game_thumbnail", g.getThumbnailUrl().c_str());
       std::string game_url = "http://boardgamegeek.com/boardgame/" + std::to_string(g.getGameId());
       flateSetVar(flate, "game_url", game_url.c_str());
-      flateSetVar(flate, "random_greet", random_greeters[(std::rand() % random_greeters.size())].c_str());
+      std::string game_authors;
+
+      for (std::string const & author : g.getAuthors()) {
+        game_authors += author + ", ";
+      }
+      game_authors = game_authors.substr(0, game_authors.find_last_of((',')));
+
+      flateSetVar(flate, "game_authors", game_authors.c_str());
+      flateSetVar(flate, "game_min_players", std::to_string(g.getMinPlayers()).c_str());
+      flateSetVar(flate, "game_max_players", std::to_string(g.getMaxPlayers()).c_str());
+      flateSetVar(flate, "game_playtime", std::to_string(g.getPlayingTime()).c_str());
 
       std::vector<bgg_client::data::user> owners;
       db.users_for_game(owners, g);

@@ -74,6 +74,12 @@ void bgg_client::response::fill_game(const json11::Json &obj, bgg_client::data::
   else {
     game.setExpands(0);
   }
+
+  if (not obj["designers"].array_items().empty()) {
+    for (auto const & designer : obj["designers"].array_items()) {
+      game.setAuthor(designer.string_value());
+    }
+  }
 }
 
 void bgg_client::response::reset()

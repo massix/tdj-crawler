@@ -114,6 +114,22 @@ static int game_by_id_callback(void *data, int argc, char *argv[], char *column[
 
     else if (col == "expands")
       game->setExpands(atoi(argv[i]));
+
+    else if (col == "authors") {
+      std::string authors(argv[i]);
+      ssize_t last_pos(0);
+      ssize_t pos(0);
+
+      while ((pos = authors.find(", ", last_pos)) != std::string::npos) {
+        game->setAuthor(authors.substr(last_pos, pos).c_str());
+        last_pos = pos + 1;
+      }
+
+      std::string last_author = authors.substr(last_pos);
+      if (not last_author.empty()) {
+        game->setAuthor(last_author);
+      }
+    }
   }
   return 0;
 }
@@ -219,10 +235,17 @@ void bgg_client::data::database::insert_update_game(const bgg_client::data::game
     pos += 1;
   }
 
+  std::string authors;
+  for (auto const & author : game.getAuthors()) {
+    authors += author + ", ";
+  }
+
+  authors = authors.substr(0, authors.find_last_of(","));
+
   insert_game_query =
     "insert into games("
     "id, name, description, minplayers, maxplayers, playingtime, "
-    "yearpublished, rank, extension, thumbnail, expands) "
+    "yearpublished, rank, extension, thumbnail, authors, expands) "
     "select "
     + std::to_string(game.getGameId()) + ", "
     "\"" + escapedName + "\", "
@@ -234,6 +257,7 @@ void bgg_client::data::database::insert_update_game(const bgg_client::data::game
     + std::to_string(game.getRank()) + ", "
     + std::to_string(game.isExtension()) + ", "
     "'" + game.getThumbnailUrl() + "', "
+    "'" + authors + "', "
     + std::to_string(game.getExpands()) + " "
     "where not exists("
     "select 1 from games where id = " + std::to_string(game.getGameId()) + ")"
