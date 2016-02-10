@@ -13,6 +13,11 @@
 #include <config.h>
 #include <flate.h>
 #include <time.h>
+#include <fstream>
+#include <cstring>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "connection.h"
 #include "request.h"
 #include "response.h"
@@ -30,20 +35,48 @@ int main(int argc, char *argv[])
   db.create_tables();
 
   if (not connection.open_connection()) {
-    std::cerr << "Not connected" << std::endl;
+    std::cerr << "Unable to connect to BGG\n";
+    exit(-1);
 	}
 
-  std::vector<bgg_client::data::user> l_users;
-  l_users.push_back(bgg_client::data::user("massi_x", "massi_x"));
-  l_users.push_back(bgg_client::data::user("beyondmaster", "Calimero"));
-  l_users.push_back(bgg_client::data::user("Chakado", "Chakado"));
-  l_users.push_back(bgg_client::data::user("Pyvert", "Pyvert"));
-  l_users.push_back(bgg_client::data::user("Platypus_Lord", "Flo"));
+  todo::config config("./conf/tdj-crawler.conf");
+  if (not config.parse_config()) {
+    std::cerr << "Unable to parse configuration file\n";
+    exit(-1);
+  }
+
+  // Retrieve the list of users.
+  std::vector<bgg_client::data::user> users_vector;
+  struct stat file_stat;
+  if (stat(config["users_file"].c_str(), &file_stat) == -1) {
+    std::cerr << "Configuration file for users does not exist.\n";
+    exit(-1);
+  }
+
+  std::ifstream users_file(config["users_file"].c_str(), std::ifstream::in | std::ifstream::binary);
+
+  while (not users_file.eof()) {
+    std::string user_info;
+    users_file >> user_info;
+
+    if (user_info.empty()) continue;
+
+    std::string bggnick = user_info.substr(0, user_info.find("|"));
+    std::string forumnick = user_info.substr(user_info.find("|") + 1, user_info.size());
+
+    users_vector.push_back(bgg_client::data::user(bggnick, forumnick));
+  }
+
+  users_file.close();
 
   bgg_client::response response;
 
-  for (auto & user : l_users) {
+  // Everytime we start the server we fetch the latest datas from BGG.
+  // This is to avoid to have an empty list in case of DB corruption.
+  for (auto & user : users_vector) {
     response.reset();
+
+    std::cout << " --- Fetching bgg user " << user.getBggNick() << " | " << user.getForumNick() << "\n";
     connection.send(bgg_client::request::collection(user.getBggNick()), response);
     db.insert_update_user(user);
 
@@ -74,27 +107,10 @@ int main(int argc, char *argv[])
   std::cout << all_games.size() << " total games in DB (expansions included)\n";
   std::cout << no_expansions.size() << " total games in DB (no expansions)\n";
 
-  bgg_client::data::game w;
-  bgg_client::data::collection exp;
-  db.game_by_name("7 Wonders", w);
-  db.expansions_for_game(w, exp);
-
-  std::cout << "Expansions for game " << w.getGameName() << "\n";
-  for (auto & expansion : exp) {
-    std::cout << " - " << expansion.getGameName() << "\n";
-  }
-
-  todo::config config("./conf/tdj-crawler.conf");
-  if (config.parse_config()) {
-    std::cout << "Ready to go!\n";
-  }
-  
   todo::web server(&config);
 
   // There should be only a single servlet
   auto const & servlet = config.getServlets().front();
-
-//  std::cout << "servlet resources and templates: " << servlet["resources"] << " " << servlet["templates"] << "\n";
 
   // Register the main servlet.
   todo::web::servlet_t games_servlet = [&](std::string const & p_page, todo::url::cgi_t const & p_cgi, todo::http_request & p_request)->std::string {
@@ -175,6 +191,8 @@ int main(int argc, char *argv[])
   };
 
   server.insert(servlet["address"], games_servlet);
+
+  std::cout << "Server running on port " << config["server_web_port"] << "\n";
   server.run();
 
   return 0;
