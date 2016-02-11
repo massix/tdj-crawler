@@ -41,6 +41,7 @@ public:
   virtual ~connection();
 
   bool open_connection();
+  bool close_connection();
 
 	// Synchronous connection
 	bool send(bgg_client::request const & request,

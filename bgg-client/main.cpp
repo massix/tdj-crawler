@@ -33,6 +33,7 @@
 
 // Temporary workaround to gracefully stop the server until I don't find a proper solution.
 todo::web * server_ptr = nullptr;
+bgg_client::connection * connection_ptr = nullptr;
 
 int main(int argc, char *argv[])
 {
@@ -44,13 +45,10 @@ int main(int argc, char *argv[])
   }
 
 	bgg_client::connection connection(BGG_URL);
+  connection_ptr = &connection;
+
   bgg_client::data::database db(config["db_path"]);
   db.create_tables();
-
-  if (not connection.open_connection()) {
-    std::cerr << "Unable to connect to BGG\n";
-    exit(-1);
-	}
 
   // Retrieve the list of users.
   std::vector<bgg_client::data::user> users_vector;
@@ -64,7 +62,7 @@ int main(int argc, char *argv[])
   bgg_client::data::collection no_expansions;
   bgg_client::data::collection all_games;
 
-  auto update_db_function = [&]()->void{
+  auto update_db_function = [&]()->void {
     std::ifstream users_file(config["users_file"].c_str(), std::ifstream::in | std::ifstream::binary);
     users_vector.clear();
 
@@ -78,6 +76,11 @@ int main(int argc, char *argv[])
       std::string forumnick = user_info.substr(user_info.find("|") + 1, user_info.size());
 
       users_vector.push_back(bgg_client::data::user(bggnick, forumnick));
+    }
+
+    if (not connection.open_connection()) {
+      std::cerr << "Unable to connect to BGG\n";
+      return;
     }
 
     users_file.close();
@@ -121,6 +124,8 @@ int main(int argc, char *argv[])
 
     std::cout << " --- " << all_games.size() << " total games in DB (expansions included)\n";
     std::cout << " --- " << no_expansions.size() << " total games in DB (no expansions)\n";
+
+    connection.close_connection();
   };
 
   // Update DB the first time we run the server.
@@ -238,6 +243,12 @@ int main(int argc, char *argv[])
   signal(SIGINT, signal_handler);
   signal(SIGABRT, signal_handler);
   signal(SIGKILL, signal_handler);
+
+  signal(SIGPIPE, [](int signal){
+    std::cerr << " --- Caught SIGPIPE, update failed, reopening connection\n";
+    connection_ptr->close_connection();
+    connection_ptr->open_connection();
+  });
 
   bool server_running(true);
 

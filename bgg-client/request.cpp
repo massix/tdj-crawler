@@ -8,6 +8,10 @@
 
 #include "request.h"
 
+#define COLLECTION_URL "/collection/"
+#define THING_URL "/thing/"
+#define HOST "bgg-json.azurewebsites.net"
+
 bgg_client::request::request()
 {
 
@@ -54,6 +58,8 @@ std::string bgg_client::request::http_request() const
   }
 
   request += "Host: " + std::string(HOST) + "\r\n";
+  request += "User-Agent: tdj-crawler/dev\r\n";
+  request += "Connection: keep-alive\r\n";
   request += "\r\n";
 
   return request;

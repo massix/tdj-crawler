@@ -19,15 +19,10 @@ using namespace bgg_client;
 
 connection::connection(std::string const & url) : m_url(url)
 {
-  m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  openlog("tdj-crawler", LOG_PID | LOG_NOWAIT, LOG_USER);
-  syslog(LOG_INFO, "Connection object created.");
 }
 
 connection::~connection()
 {
-  closelog();
-  close(m_socket);
 }
 
 bool connection::open_connection()
@@ -36,6 +31,22 @@ bool connection::open_connection()
   struct sockaddr_in l_serverAddress;
   struct hostent *l_server;
   int l_port(80);
+
+  m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  openlog("tdj-crawler", LOG_PID | LOG_NOWAIT, LOG_USER);
+  syslog(LOG_INFO, "Connection object created.");
+
+  // Set keep-alive option
+  int keep_alive = 1;
+  if (setsockopt(m_socket, SOL_SOCKET, SO_KEEPALIVE, &keep_alive, sizeof(keep_alive))) {
+    perror("setsockopt(): ");
+  }
+
+  // Set reusable socket option
+  int reusable = 1;
+  if (setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, &reusable, sizeof(keep_alive))) {
+    perror("setsockopt(): ");
+  }
 
   l_server = gethostbyname(m_url.c_str());
 
@@ -50,6 +61,11 @@ bool connection::open_connection()
   return connect(m_socket,
                  (struct sockaddr *) &l_serverAddress,
                  sizeof(l_serverAddress)) < 0 ? false : true;
+}
+
+bool connection::close_connection()
+{
+  return close(m_socket) < 0 ? false : true;
 }
 
 bool connection::send(const bgg_client::request &request, bgg_client::response &response)

@@ -4,10 +4,6 @@
 #include <string>
 #include <vector>
 
-#define COLLECTION_URL "/collection/"
-#define THING_URL "/thing/"
-#define HOST "bgg-json.azurewebsites.net"
-
 namespace bgg_client
 {
 
