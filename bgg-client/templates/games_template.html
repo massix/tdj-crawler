@@ -63,12 +63,12 @@
           <h3 class="post-title">##game_name##</h3>
           <div class="posts">
             <p class="post-meta">Owned by: ##game_owners##</p>
-            <p class="post-meta">A game by: ##game_authors## for ##game_min_players## - ##game_max_players## players; ##game_playtime##&apos; playtime</p>
+            <p class="post-meta">
+              <span style="float: left;" class="ui-icon ui-icon-gear"></span>&nbsp;##game_authors##<br />
+              <span style="float: left;" class="ui-icon ui-icon-person"></span>&nbsp;##game_min_players## - ##game_max_players## players<br />
+              <span style="float: left;" class="ui-icon ui-icon-clock"></span>&nbsp;##game_playtime##&apos;</p>
             <p class="post-description">
-            <img class="post-avatar"
-              height="150"
-              width="150"
-              src="##game_thumbnail##" />
+            <img class="post-avatar" style="max-height: 150px" src="##game_thumbnail##" />
             ##game_description## <br />
 
             <h1 style="display: ##has_expansions##" class="content-subhead">Expansions</h1>
@@ -79,7 +79,7 @@
               <div class="posts">
                 <p class="post-meta">Owned by: ##expansion_owners##</p>
                 <p class="post-description">
-                <img class="post-avatar" height="150" width="150" src="##expansion_thumbnail##" />
+                <img class="post-avatar" style="max-height: 150px" src="##expansion_thumbnail##" />
                 ##expansion_description## <br />
               </div>
               <!-- #ENDTABLE game_expansions -->
