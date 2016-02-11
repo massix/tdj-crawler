@@ -121,11 +121,11 @@ static int game_by_id_callback(void *data, int argc, char *argv[], char *column[
       ssize_t pos(0);
 
       while ((pos = authors.find(", ", last_pos)) != std::string::npos) {
-        game->setAuthor(authors.substr(last_pos, pos).c_str());
-        last_pos = pos + 1;
+        game->setAuthor(authors.substr(last_pos, pos - last_pos).c_str());
+        last_pos = pos + 2;
       }
 
-      std::string last_author = authors.substr(last_pos);
+      std::string last_author = authors.substr(last_pos, authors.size());
       if (not last_author.empty()) {
         game->setAuthor(last_author);
       }

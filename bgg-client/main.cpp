@@ -61,6 +61,7 @@ int main(int argc, char *argv[])
   // Shared objects
   bgg_client::data::collection no_expansions;
   bgg_client::data::collection all_games;
+  time_t db_last_update = time(0);
 
   auto update_db_function = [&]()->void {
     std::ifstream users_file(config["users_file"].c_str(), std::ifstream::in | std::ifstream::binary);
@@ -102,6 +103,7 @@ int main(int argc, char *argv[])
       if (response.is_valid()) {
         for (auto & game : response.getGames()) {
           db.user_owns_game(user, game);
+          user.accessCollection().push_back(game);
 
           if (not db.game_exists(game)) {
 
@@ -121,6 +123,7 @@ int main(int argc, char *argv[])
 
     db.all_games(all_games);
     db.all_games_no_expansions(no_expansions);
+    db_last_update = time(0);
 
     std::cout << " --- " << all_games.size() << " total games in DB (expansions included)\n";
     std::cout << " --- " << no_expansions.size() << " total games in DB (no expansions)\n";
@@ -158,6 +161,16 @@ int main(int argc, char *argv[])
 
     std::srand((uint32_t) time(0));
     flateSetVar(flate, "random_greet", random_greeters[(std::rand() % random_greeters.size())].c_str());
+
+    // Users and info in navigator
+    for (auto const & user : users_vector) {
+      flateSetVar(flate, "user_forumnick", user.getForumNick().c_str());
+      flateSetVar(flate, "user_countgames", std::to_string(user.getCollection().size()).c_str());
+      flateDumpTableLine(flate, "users_list");
+    }
+
+    flateSetVar(flate, "total_games", std::to_string(all_games.size()).c_str());
+    flateSetVar(flate, "db_last_update", ctime(&db_last_update));
 
     for (auto const & g : no_expansions) {
       std::string string_owners;
