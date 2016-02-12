@@ -171,6 +171,8 @@ int main(int argc, char *argv[])
 
     flateSetVar(flate, "total_games", std::to_string(all_games.size()).c_str());
     flateSetVar(flate, "db_last_update", ctime(&db_last_update));
+    time_t next_update = db_last_update + std::atoi(config["update_db_timeout"].c_str());
+    flateSetVar(flate, "db_next_update", ctime(&next_update));
 
     uint32_t games_index(0);
     for (auto const & g : no_expansions) {
