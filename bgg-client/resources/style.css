@@ -17,6 +17,17 @@ h3 {
   font-weight: 100;
 }
 
+#game_search {
+  margin-top: 15px;
+  margin-bottom: 15px;
+  width: 100%;
+  color: black;
+}
+
+#game_search:placeholder_shown {
+  color: gray;
+}
+
 /* LAYOUT CSS */
 .pure-img-responsive {
   max-width: 100%;

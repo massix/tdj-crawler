@@ -7,12 +7,25 @@
     <script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
     <script>
       $(function() {
+        var games = [
+           <!-- #BEGINTABLE games_javascript_variables -->
+           {value: "##games_javascript_name##", anchor: "game_##games_javascript_anchor##"}##games_javascript_comma_needed##
+           <!-- #ENDTABLE games_javascript_variables -->
+        ];
         $("#accordion").accordion({ heightStyle: "content", collapsible: true, active: false });
         $(".expansion-title").click(function() {
-                                    var options = {};
-                                    var descr_id = "#description_" + $(this).attr("id");
-                                    $(descr_id).toggle("blind", options, 300);
-                                    });
+          var options = {};
+          var descr_id = "#description_" + $(this).attr("id");
+          $(descr_id).toggle("blind", options, 300);
+        });
+        $("#game_search").autocomplete({
+            minLength: 0,
+            source: games,
+            select: function(event, ui) {
+              document.getElementById(ui.item.anchor).scrollIntoView();
+              $("#game_search").val("");
+          }
+        });
       });
     </script>
 
@@ -21,7 +34,7 @@
     <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/grids-responsive-min.css">
     <link rel="stylesheet" href="/resources/jquery-ui.css">
     <link rel="stylesheet" href="/resources/style.css">
-      </head>
+  </head>
 
   <body>
     <div id="layout" class="pure-g">
@@ -35,6 +48,7 @@
           <img class="pure-img-responsive" style="margin-top: -10em" src="http://trollsdejeux.fr/forum/styles/360Elite/theme/images/site_logo.png" />
           <h1 class="brand-title">Trolls de Jeux</h1>
           <h2 class="brand-tagline">##random_greet##</h2>
+          <input id="game_search" placeholder="Look for a game!" />
           <nav class="nav">
             <!-- Here we will have a list of registered users? -->
             <ul class="nav-list">
@@ -69,7 +83,7 @@
       <div class="content pure-u-1 pure-u-md-3-4">
         <div id="accordion">
           <!-- #BEGINTABLE games_accordion -->
-          <h3 class="post-title">##game_name##
+          <h3 class="post-title" id="game_##game_anchor##">##game_name##
             <div style="display: ##has_expansions##;
                         height: 100%; margin-top: 3px; margin-bottom: 3px;
                         position: relative;

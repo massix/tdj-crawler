@@ -172,6 +172,7 @@ int main(int argc, char *argv[])
     flateSetVar(flate, "total_games", std::to_string(all_games.size()).c_str());
     flateSetVar(flate, "db_last_update", ctime(&db_last_update));
 
+    uint32_t games_index(0);
     for (auto const & g : no_expansions) {
       std::string string_owners;
       flateSetVar(flate, "game_name", g.getGameName().c_str());
@@ -179,7 +180,16 @@ int main(int argc, char *argv[])
       flateSetVar(flate, "game_thumbnail", g.getThumbnailUrl().c_str());
       std::string game_url = "http://boardgamegeek.com/boardgame/" + std::to_string(g.getGameId());
       flateSetVar(flate, "game_url", game_url.c_str());
+      flateSetVar(flate, "game_anchor", std::to_string(g.getGameId()).c_str());
       std::string game_authors;
+
+      flateSetVar(flate, "games_javascript_name", g.getGameName().c_str());
+      flateSetVar(flate, "games_javascript_anchor", std::to_string(g.getGameId()).c_str());
+      if (++games_index == no_expansions.size())
+        flateSetVar(flate, "games_javascript_comma_needed", " ");
+      else
+        flateSetVar(flate, "games_javascript_comma_needed", ",");
+      flateDumpTableLine(flate, "games_javascript_variables");
 
       for (std::string const & author : g.getAuthors()) {
         game_authors += author + ", ";
