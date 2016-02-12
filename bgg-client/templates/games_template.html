@@ -8,7 +8,11 @@
     <script>
       $(function() {
         $("#accordion").accordion({ heightStyle: "content" });
-        $(".expansions").accordion({ heightStyle: "content" });
+        $(".expansion-title").click(function() {
+                                    var options = {};
+                                    var descr_id = "#description_" + $(this).attr("id");
+                                    $(descr_id).toggle("blind", options, 300);
+                                    });
       });
     </script>
 
@@ -94,12 +98,17 @@
             <div style="display: ##has_expansions##" class="expansions">
 
               <!-- #BEGINTABLE game_expansions -->
-              <h3 class="post-title">##expansion_name##</h3>
+              <h3 class="expansion-title" style="font-size: 100%; cursor: pointer;" id="##expansion_id##">
+                <span style="float: left;" class="ui-icon ui-icon-zoomin"></span>&nbsp;
+                ##expansion_name##
+              </h3>
               <div class="posts">
                 <p class="post-meta">Owned by: ##expansion_owners##</p>
-                <p class="post-description">
-                <img class="post-avatar" style="max-height: 150px" src="##expansion_thumbnail##" />
-                ##expansion_description## <br />
+                  <div class="expansion-description" id="description_##expansion_id##" style="display: none">
+                  <p class="post-description">
+                  <img class="post-avatar" style="max-height: 150px" src="##expansion_thumbnail##" />
+                  ##expansion_description## <br />
+                </div>
               </div>
               <!-- #ENDTABLE game_expansions -->
 

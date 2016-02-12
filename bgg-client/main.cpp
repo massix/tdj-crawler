@@ -215,6 +215,7 @@ int main(int argc, char *argv[])
         flateSetVar(flate, "expansion_name", exp.getGameName().c_str());
         flateSetVar(flate, "expansion_thumbnail", exp.getThumbnailUrl().c_str());
         flateSetVar(flate, "expansion_description", exp.getDescription().c_str());
+        flateSetVar(flate, "expansion_id", std::to_string(exp.getGameId()).c_str());
 
         std::vector<bgg_client::data::user> exp_owners;
         db.users_for_game(exp_owners, exp);
