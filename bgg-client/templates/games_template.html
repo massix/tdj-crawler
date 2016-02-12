@@ -7,7 +7,7 @@
     <script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
     <script>
       $(function() {
-        $("#accordion").accordion({ heightStyle: "content", collapsible: true });
+        $("#accordion").accordion({ heightStyle: "content", collapsible: true, active: false });
         $(".expansion-title").click(function() {
                                     var options = {};
                                     var descr_id = "#description_" + $(this).attr("id");
