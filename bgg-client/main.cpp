@@ -209,6 +209,7 @@ int main(int argc, char *argv[])
       bgg_client::data::collection expansions;
       db.expansions_for_game(g, expansions);
       flateSetVar(flate, "has_expansions", expansions.empty() ? "none" : "default");
+      flateSetVar(flate, "expansions_total", std::to_string(expansions.size()).c_str());
 
       for (auto const & exp : expansions) {
         flateSetVar(flate, "expansion_name", exp.getGameName().c_str());

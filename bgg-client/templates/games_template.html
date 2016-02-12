@@ -65,7 +65,21 @@
       <div class="content pure-u-1 pure-u-md-3-4">
         <div id="accordion">
           <!-- #BEGINTABLE games_accordion -->
-          <h3 class="post-title">##game_name##</h3>
+          <h3 class="post-title">##game_name##
+            <div style="display: ##has_expansions##;
+                        height: 100%; margin-top: 3px; margin-bottom: 3px;
+                        position: relative;
+                        right: 0;
+                        margin-right: 3px;
+                        float: right;
+                        color: red;
+                        font-weight: 100;
+                        font-size: 80%;
+                        text-decoration: underline;
+                        text-transform: uppercase;">
+                        ##expansions_total## expansion(s) inside.
+            </div>
+          </h3>
           <div class="posts">
             <p class="post-meta">Owned by: ##game_owners##</p>
             <p class="post-meta">
