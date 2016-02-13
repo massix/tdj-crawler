@@ -35,6 +35,9 @@
 todo::web * server_ptr = nullptr;
 bgg_client::connection * connection_ptr = nullptr;
 
+// Force an update of the base if the following var is true.
+bool force_base_update(false);
+
 int main(int argc, char *argv[])
 {
 
@@ -293,6 +296,11 @@ int main(int argc, char *argv[])
     connection_ptr->open_connection();
   });
 
+  signal(SIGUSR1, [](int signal){
+    std::cerr << " --- FORCING UPDATE OF THE BASE ---\n";
+    force_base_update = true;
+  });
+
   bool server_running(true);
 
   // Register the background thread responsible of regularly updating the DB
@@ -306,8 +314,9 @@ int main(int argc, char *argv[])
 
       // We check every second in order to ensure a proper shutdown of the service
       // When needed.
-      if (++slept_time >= timeout) {
+      if (++slept_time >= timeout or force_base_update) {
         update_db_function();
+        force_base_update = false;
         slept_time = 0;
       }
     }
