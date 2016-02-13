@@ -228,6 +228,9 @@ int main(int argc, char *argv[])
       flateSetVar(flate, "game_authors", game_authors.c_str());
       flateSetVar(flate, "game_min_players", std::to_string(g.getMinPlayers()).c_str());
       flateSetVar(flate, "game_max_players", std::to_string(g.getMaxPlayers()).c_str());
+
+      // Some games have either 0 or the same as the min player.
+      flateSetVar(flate, "max_players_show", g.getMaxPlayers() != g.getMinPlayers() and g.getMaxPlayers() > 0? "inline" : "none");
       flateSetVar(flate, "game_playtime", std::to_string(g.getPlayingTime()).c_str());
 
       std::vector<bgg_client::data::user> owners;
