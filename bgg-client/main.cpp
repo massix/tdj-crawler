@@ -298,13 +298,13 @@ int main(int argc, char *argv[])
   signal(SIGABRT, signal_handler);
   signal(SIGKILL, signal_handler);
 
-  signal(SIGPIPE, [](int signal){
+  signal(SIGPIPE, [](int signal)->void {
     std::cerr << " --- Caught SIGPIPE, update failed, reopening connection\n";
     connection_ptr->close_connection();
     connection_ptr->open_connection();
   });
 
-  signal(SIGUSR1, [](int signal){
+  signal(SIGUSR1, [](int signal)->void {
     std::cerr << " --- FORCING UPDATE OF THE BASE ---\n";
     force_base_update = true;
   });
