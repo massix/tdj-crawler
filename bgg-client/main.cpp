@@ -77,6 +77,8 @@ int main(int argc, char *argv[])
   auto update_db_function = [&]()->void {
     std::ifstream users_file(config["users_file"].c_str(), std::ifstream::in | std::ifstream::binary);
     users_vector.clear();
+    all_games.clear();
+    no_expansions.clear();
 
     while (not users_file.eof()) {
       std::string user_info;
