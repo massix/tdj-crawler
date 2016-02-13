@@ -123,10 +123,26 @@ int main(int argc, char *argv[])
 
     db.all_games(all_games);
     db.all_games_no_expansions(no_expansions);
-    db_last_update = time(0);
+
+    // Purge games without owners.
+    for (auto const & game : all_games) {
+      std::vector<bgg_client::data::user> owners;
+      db.users_for_game(owners, game);
+      if (owners.empty()) {
+        std::cout << " => Purging game `" << game.getGameName() << "' from DB.\n";
+        db.delete_game(game);
+      }
+    }
+
+    // Re-reset DB.
+    all_games.clear();
+    no_expansions.clear();
+    db.all_games(all_games);
+    db.all_games_no_expansions(no_expansions);
 
     std::cout << " --- " << all_games.size() << " total games in DB (expansions included)\n";
     std::cout << " --- " << no_expansions.size() << " total games in DB (no expansions)\n";
+    db_last_update = time(0);
 
     connection.close_connection();
   };

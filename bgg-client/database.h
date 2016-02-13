@@ -77,6 +77,9 @@ public:
   /* Get all the expansions for a given game */
   void expansions_for_game(game const & game, collection & expansions);
 
+  /* Deletes a game from the DB */
+  void delete_game(game const & game);
+
   /* Concurrency methods */
   void lock();
   void unlock();

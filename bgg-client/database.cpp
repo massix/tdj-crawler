@@ -416,6 +416,16 @@ void bgg_client::data::database::expansions_for_game(const bgg_client::data::gam
   }
 }
 
+void bgg_client::data::database::delete_game(const bgg_client::data::game &game)
+{
+  std::string remove_game_query;
+  if (game.getGameId() > 0) {
+    remove_game_query = "delete from games where id = " + std::to_string(game.getGameId()) + ";";
+
+    sqlite3_exec(m_db, remove_game_query.c_str(), nullptr, nullptr, nullptr);
+  }
+}
+
 void bgg_client::data::database::lock()
 {
   sqlite3_mutex_enter(sqlite3_db_mutex(m_db));
