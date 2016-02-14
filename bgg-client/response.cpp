@@ -83,9 +83,15 @@ void bgg_client::response::fill_game(const json11::Json &obj, bgg_client::data::
 
   if (game.isExtension() and not obj["expands"].array_items().empty()) {
     game.setExpands(obj["expands"].array_items()[0]["gameId"].int_value());
+    game.setIsExtension(true);
+  }
+  else if (not obj["expands"].array_items().empty()) {
+    game.setExpands(obj["expands"].array_items()[0]["gameId"].int_value());
+    game.setIsExtension(true);
   }
   else {
     game.setExpands(0);
+    game.setIsExtension(false);
   }
 
   if (not obj["designers"].array_items().empty()) {

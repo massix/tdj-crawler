@@ -95,6 +95,14 @@ int main(int argc, char *argv[])
     users_vector.clear();
     all_games.clear();
     no_expansions.clear();
+
+    // Clear In memory DB.
+    for (auto & repr : in_memory_db) {
+      repr.second.wants_to_play.clear();
+      repr.second.owners.clear();
+      repr.second.expansions.clear();
+    }
+
     in_memory_db.clear();
 
     while (not users_file.eof()) {
