@@ -254,6 +254,7 @@ int main(int argc, char *argv[])
       std::string game_url = "http://boardgamegeek.com/boardgame/" + std::to_string(g.getGameId());
       flateSetVar(flate, "game_url", game_url.c_str());
       flateSetVar(flate, "game_anchor", std::to_string(g.getGameId()).c_str());
+      flateSetVar(flate, "game_rank", std::to_string(g.getRank()).c_str());
       std::string game_authors;
 
       flateSetVar(flate, "games_javascript_name", g.getGameName().c_str());
