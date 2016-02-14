@@ -425,7 +425,7 @@ void bgg_client::data::database::game_by_name(const std::string &name, bgg_clien
 void bgg_client::data::database::all_games(bgg_client::data::collection &collection)
 {
   std::string get_all_games;
-  get_all_games = "select id from games order by name asc;";
+  get_all_games = "select id from games order by name collate nocase asc;";
   collection.clear();
 
   sqlite3_exec(m_db, get_all_games.c_str(), get_all_games_callback, &collection, 0);
@@ -438,7 +438,7 @@ void bgg_client::data::database::all_games(bgg_client::data::collection &collect
 void bgg_client::data::database::all_games_no_expansions(bgg_client::data::collection &collection)
 {
   std::string get_all_games_query;
-  get_all_games_query = "select id from games where expands = 0 order by name asc";
+  get_all_games_query = "select id from games where expands = 0 order by name collate nocase asc;";
   collection.clear();
 
   sqlite3_exec(m_db, get_all_games_query.c_str(), get_all_games_callback, &collection, 0);
@@ -451,7 +451,7 @@ void bgg_client::data::database::all_games_no_expansions(bgg_client::data::colle
 void bgg_client::data::database::expansions_for_game(const bgg_client::data::game &game, bgg_client::data::collection &expansions)
 {
   std::string get_all_expansions_query;
-  get_all_expansions_query = "select id from games where expands = " + std::to_string(game.getGameId()) + ";";
+  get_all_expansions_query = "select id from games where expands = " + std::to_string(game.getGameId()) + " order by id asc;";
   expansions.clear();
 
   sqlite3_exec(m_db, get_all_expansions_query.c_str(), get_all_games_callback, &expansions, 0);
