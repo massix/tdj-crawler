@@ -29,6 +29,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <thread>
+#include <map>
+#include <mutex>
 #include "connection.h"
 #include "request.h"
 #include "response.h"
@@ -45,6 +47,9 @@ bgg_client::connection * connection_ptr = nullptr;
 
 // Force an update of the base if the following var is true.
 bool force_base_update(false);
+
+// Mutex for updater and clients
+std::mutex synchro;
 
 int main(int argc, char *argv[])
 {
@@ -72,13 +77,19 @@ int main(int argc, char *argv[])
   // Shared objects
   bgg_client::data::collection no_expansions;
   bgg_client::data::collection all_games;
+
+  // Map for games, each entry has a list of owners and expansions.
+  std::map<bgg_client::data::game, std::pair<std::vector<bgg_client::data::user>, bgg_client::data::collection>> ownerships;
   time_t db_last_update = time(0);
 
   auto update_db_function = [&]()->void {
     std::ifstream users_file(config["users_file"].c_str(), std::ifstream::in | std::ifstream::binary);
+
+    synchro.lock();
     users_vector.clear();
     all_games.clear();
     no_expansions.clear();
+    ownerships.clear();
 
     while (not users_file.eof()) {
       std::string user_info;
@@ -153,6 +164,20 @@ int main(int argc, char *argv[])
     db.all_games(all_games);
     db.all_games_no_expansions(no_expansions);
 
+    // Fill objects
+    for (auto const & game : all_games) {
+      bgg_client::data::collection expansions;
+      std::vector<bgg_client::data::user> owners;
+      db.expansions_for_game(game, expansions);
+      db.users_for_game(owners, game);
+      std::pair<std::vector<bgg_client::data::user>, bgg_client::data::collection> insertion;
+      insertion.first = owners;
+      insertion.second = expansions;
+
+      ownerships[game] = insertion;
+    }
+
+    synchro.unlock();
     std::cout << " --- " << all_games.size() << " total games in DB (expansions included)\n";
     std::cout << " --- " << no_expansions.size() << " total games in DB (no expansions)\n";
     db_last_update = time(0);
@@ -173,18 +198,13 @@ int main(int argc, char *argv[])
     std::string ret;
     std::string content_type = "text/html";
     p_request.m_code = todo::http_request::kOkay;
+    p_request["Content-Type"] = content_type;
 
     Flate * flate = 0;
     flateSetFile(&flate, std::string(servlet["templates"] + "games_template.html").c_str());
 
     std::vector<std::string> random_greeters =
     {
-      "All games owned.",
-      "Because games matter.",
-      "Simply the best!",
-      "We won't bite you.",
-      "We accept Italians too!",
-      "This is a beta version!",
       "Fun every Friday!"
     };
 
@@ -202,6 +222,7 @@ int main(int argc, char *argv[])
     flateSetVar(flate, "db_last_update", ctime(&db_last_update));
     time_t next_update = db_last_update + std::atoi(config["update_db_timeout"].c_str());
     flateSetVar(flate, "db_next_update", ctime(&next_update));
+    synchro.lock();
 
     uint32_t games_index(0);
     for (auto const & g : no_expansions) {
@@ -235,10 +256,7 @@ int main(int argc, char *argv[])
       flateSetVar(flate, "max_players_show", g.getMaxPlayers() != g.getMinPlayers() and g.getMaxPlayers() > 0? "inline" : "none");
       flateSetVar(flate, "game_playtime", std::to_string(g.getPlayingTime()).c_str());
 
-      std::vector<bgg_client::data::user> owners;
-      db.users_for_game(owners, g);
-
-      for (auto const & user : owners) {
+      for (auto const & user : ownerships[g].first) {
         std::string bgg_url = "http://boardgamegeek.com/user/" + user.getBggNick();
         string_owners += user.getForumNick() + " (" +
           "<a href=\"" + bgg_url + "\">" +
@@ -250,22 +268,18 @@ int main(int argc, char *argv[])
       flateSetVar(flate, "game_owners", string_owners.c_str());
 
       // Get expansions
-      bgg_client::data::collection expansions;
-      db.expansions_for_game(g, expansions);
-      flateSetVar(flate, "has_expansions", expansions.empty() ? "none" : "default");
-      flateSetVar(flate, "expansions_total", std::to_string(expansions.size()).c_str());
+      flateSetVar(flate, "has_expansions", ownerships[g].second.empty() ? "none" : "default");
+      flateSetVar(flate, "expansions_total", std::to_string(ownerships[g].second.size()).c_str());
 
-      for (auto const & exp : expansions) {
+      for (auto const & exp : ownerships[g].second) {
         flateSetVar(flate, "expansion_name", exp.getGameName().c_str());
         flateSetVar(flate, "expansion_thumbnail", exp.getThumbnailUrl().c_str());
         flateSetVar(flate, "expansion_description", exp.getDescription().c_str());
         flateSetVar(flate, "expansion_id", std::to_string(exp.getGameId()).c_str());
 
-        std::vector<bgg_client::data::user> exp_owners;
-        db.users_for_game(exp_owners, exp);
         std::string exp_owners_string;
 
-        for (auto const & user : exp_owners) {
+        for (auto const & user : ownerships[exp].first) {
           std::string bgg_url = "http://boardgamegeek.com/user/" + user.getBggNick();
           exp_owners_string += user.getForumNick() + " (" +
             "<a href=\"" + bgg_url + "\">" +
@@ -281,6 +295,8 @@ int main(int argc, char *argv[])
 
       flateDumpTableLine(flate, "games_accordion");
     }
+
+    synchro.unlock();
 
     char * buffer = flatePage(flate);
     ret = std::string(buffer);

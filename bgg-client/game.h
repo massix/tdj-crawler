@@ -67,6 +67,9 @@ public:
 
   uint32_t const & getExpands() const { return m_expands; }
 
+  // Needed to create a map.
+  bool operator< (bgg_client::data::game const & right) const { return m_gameId < right.m_gameId; }
+
 private:
   uint32_t m_gameId;
   uint32_t m_minPlayers;
