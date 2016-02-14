@@ -20,6 +20,7 @@
 #include <string>
 #include <json11.hpp>
 #include "game.h"
+#include "collection.h"
 
 namespace bgg_client
 {
@@ -33,9 +34,14 @@ public:
   void initialize(std::string const &json_raw);
 
   bool is_valid() const { return m_valid; }
-  std::vector<bgg_client::data::game> & getGames()
+  data::collection & getGames()
   {
     return m_games;
+  }
+
+  data::collection & getWantsToPlay()
+  {
+    return m_wantsToPlay;
   }
 
   void reset();
@@ -45,7 +51,8 @@ public:
 private:
   json11::Json * m_object;
   std::string m_rawJson;
-  std::vector<::bgg_client::data::game> m_games;
+  data::collection m_games;
+  data::collection m_wantsToPlay;
 
   bool m_valid;
 

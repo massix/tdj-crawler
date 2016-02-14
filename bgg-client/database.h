@@ -50,13 +50,19 @@ public:
   /* Force an update of an user's collection */
   void update_user_collection(user const& user, collection const &collection);
 
+  /* Update user's wants to play list */
+  void update_user_wants(user const& user, collection const& collection);
+
   /* Modify the collection object to reflect the games owned by
    * the user in parameter
    */
   void collection_for_user(user const & user, collection & collection);
 
-  /* Get a list of users that own a game */
+  /* Get a list of users who own the game */
   void users_for_game(std::vector<user> & list, game const & game);
+
+  /* Get a list of users who want to play the game */
+  void wants_for_game(std::vector<user>& list, game const & game);
 
   /* Returns true if the given name is in the DB already */
   bool game_exists(game const & game);

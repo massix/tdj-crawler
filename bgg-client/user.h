@@ -39,11 +39,16 @@ public:
   collection const & getCollection() const { return m_collection; }
   collection & accessCollection() { return m_collection; }
 
+  void setWantsToPlay(collection const& wants_to_play) { m_wants_to_play = wants_to_play; }
+  collection const & getWantsToPlay() const { return m_wants_to_play; }
+  collection & accessWantsToPlay() { return m_wants_to_play; }
+
 private:
   std::string m_bggNick;
   std::string m_forumNick;
 
   collection m_collection;
+  collection m_wants_to_play;
 
 protected:
 };

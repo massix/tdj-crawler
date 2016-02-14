@@ -79,7 +79,13 @@ int main(int argc, char *argv[])
   bgg_client::data::collection all_games;
 
   // Map for games, each entry has a list of owners and expansions.
-  std::map<bgg_client::data::game, std::pair<std::vector<bgg_client::data::user>, bgg_client::data::collection>> ownerships;
+  struct db_representation {
+    std::vector<bgg_client::data::user> owners;
+    std::vector<bgg_client::data::user> wants_to_play;
+    bgg_client::data::collection expansions;
+  };
+
+  std::map<bgg_client::data::game, db_representation> in_memory_db;
   time_t db_last_update = time(0);
 
   auto update_db_function = [&]()->void {
@@ -89,7 +95,7 @@ int main(int argc, char *argv[])
     users_vector.clear();
     all_games.clear();
     no_expansions.clear();
-    ownerships.clear();
+    in_memory_db.clear();
 
     while (not users_file.eof()) {
       std::string user_info;
@@ -122,13 +128,19 @@ int main(int argc, char *argv[])
       db.insert_update_user(user);
 
       // Force an update of the users' collection after each refresh.
+      user.accessCollection().clear();
+      user.accessWantsToPlay().clear();
+
+      for (auto & game : response.getGames())
+        user.accessCollection().push_back(game);
+      for (auto & game : response.getWantsToPlay())
+        user.accessWantsToPlay().push_back(game);
+
       db.update_user_collection(user, user.getCollection());
+      db.update_user_wants(user, user.getWantsToPlay());
 
       if (response.is_valid()) {
         for (auto & game : response.getGames()) {
-          db.user_owns_game(user, game);
-          user.accessCollection().push_back(game);
-
           if (not db.game_exists(game)) {
 
             // Query BGG to get more details about the game itself
@@ -168,13 +180,14 @@ int main(int argc, char *argv[])
     for (auto const & game : all_games) {
       bgg_client::data::collection expansions;
       std::vector<bgg_client::data::user> owners;
+      std::vector<bgg_client::data::user> wants;
       db.expansions_for_game(game, expansions);
       db.users_for_game(owners, game);
-      std::pair<std::vector<bgg_client::data::user>, bgg_client::data::collection> insertion;
-      insertion.first = owners;
-      insertion.second = expansions;
+      db.wants_for_game(wants, game);
 
-      ownerships[game] = insertion;
+      in_memory_db[game].owners = owners;
+      in_memory_db[game].expansions = expansions;
+      in_memory_db[game].wants_to_play = wants;
     }
 
     synchro.unlock();
@@ -256,22 +269,32 @@ int main(int argc, char *argv[])
       flateSetVar(flate, "max_players_show", g.getMaxPlayers() != g.getMinPlayers() and g.getMaxPlayers() > 0? "inline" : "none");
       flateSetVar(flate, "game_playtime", std::to_string(g.getPlayingTime()).c_str());
 
-      for (auto const & user : ownerships[g].first) {
+      for (auto const & user : in_memory_db[g].owners) {
         std::string bgg_url = "http://boardgamegeek.com/user/" + user.getBggNick();
         string_owners += user.getForumNick() + " (" +
           "<a href=\"" + bgg_url + "\">" +
           user.getBggNick() + "</a>), ";
       }
 
+      flateSetVar(flate, "has_wants", in_memory_db[g].wants_to_play.empty()? "none" : "inline");
+      flateSetVar(flate, "wants_total", std::to_string(in_memory_db[g].wants_to_play.size()).c_str());
+      std::string wants_list;
+
+      for (auto const & user : in_memory_db[g].wants_to_play) {
+        wants_list += user.getForumNick() + " ";
+      }
+
+      flateSetVar(flate, "wants_list", wants_list.c_str());
+
       // Remove last ","
       string_owners = string_owners.substr(0, string_owners.find_last_of(","));
       flateSetVar(flate, "game_owners", string_owners.c_str());
 
       // Get expansions
-      flateSetVar(flate, "has_expansions", ownerships[g].second.empty() ? "none" : "default");
-      flateSetVar(flate, "expansions_total", std::to_string(ownerships[g].second.size()).c_str());
+      flateSetVar(flate, "has_expansions", in_memory_db[g].expansions.empty() ? "none" : "inline");
+      flateSetVar(flate, "expansions_total", std::to_string(in_memory_db[g].expansions.size()).c_str());
 
-      for (auto const & exp : ownerships[g].second) {
+      for (auto const & exp : in_memory_db[g].expansions) {
         flateSetVar(flate, "expansion_name", exp.getGameName().c_str());
         flateSetVar(flate, "expansion_thumbnail", exp.getThumbnailUrl().c_str());
         flateSetVar(flate, "expansion_description", exp.getDescription().c_str());
@@ -279,7 +302,7 @@ int main(int argc, char *argv[])
 
         std::string exp_owners_string;
 
-        for (auto const & user : ownerships[exp].first) {
+        for (auto const & user : in_memory_db[exp].owners) {
           std::string bgg_url = "http://boardgamegeek.com/user/" + user.getBggNick();
           exp_owners_string += user.getForumNick() + " (" +
             "<a href=\"" + bgg_url + "\">" +

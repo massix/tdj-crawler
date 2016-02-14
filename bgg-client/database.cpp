@@ -197,7 +197,8 @@ void bgg_client::data::database::create_tables()
     "create table if not exists users("
     "bggnick text primary_key not null, "
     "forumnick text primary_key not null, "
-    "games text" // space-separated list of games id
+    "games text, " // space-separated list of games id
+    "wants text" // space-separated list of games id
     ");";
 
   sqlite3_exec(m_db, games_table_query.c_str(), 0, 0, 0);
@@ -208,16 +209,23 @@ void bgg_client::data::database::insert_update_user(const bgg_client::data::user
 {
   std::string insert_user_query;
   std::string imploded_games;
+  std::string imploded_wants;
 
   // Implode all games into a single string
   for (auto const & g : user.getCollection()) {
     imploded_games += std::to_string(g.getGameId()) + " ";
   }
 
+  // Implode all wants into a single string
+  for (auto const & g : user.getWantsToPlay()) {
+    imploded_wants += std::to_string(g.getGameId()) + " ";
+  }
+
   insert_user_query =
-    "insert into users(bggnick, forumnick, games) select '" + user.getBggNick() + "', "
+    "insert into users(bggnick, forumnick, games, wants) select '" + user.getBggNick() + "', "
     "'" + user.getForumNick() + "', "
-    "'" + imploded_games + "'"
+    "'" + imploded_games + "', "
+    "'" + imploded_wants + "'"
     "where not exists(select 1 from users where bggnick = '" + user.getBggNick() + "')"
     ";";
 
@@ -321,19 +329,34 @@ void bgg_client::data::database::user_owns_game(bgg_client::data::user const &us
     update_user_collection(result, result.getCollection());
   }
 }
-
 void bgg_client::data::database::update_user_collection(const bgg_client::data::user &user, const bgg_client::data::collection &collection)
 {
   std::string imploded_games;
   std::string update_query;
 
   // Implode all games into a single string
-  for (auto const & g : user.getCollection()) {
+  for (auto const & g : collection) {
     imploded_games += std::to_string(g.getGameId()) + " ";
   }
 
   update_query = "update users set games = '" + imploded_games + "' "
                  "where bggnick = '" + user.getBggNick() + "';";
+
+  sqlite3_exec(m_db, update_query.c_str(), 0, 0, 0);
+}
+
+void bgg_client::data::database::update_user_wants(const bgg_client::data::user &user, const bgg_client::data::collection &collection)
+{
+  std::string imploded_games;
+  std::string update_query;
+
+  // Implode all games into a single string
+  for (auto const & g : collection) {
+    imploded_games += std::to_string(g.getGameId()) + " ";
+  }
+
+  update_query = "update users set wants = '" + imploded_games + "' "
+  "where bggnick = '" + user.getBggNick() + "';";
 
   sqlite3_exec(m_db, update_query.c_str(), 0, 0, 0);
 }
@@ -358,6 +381,20 @@ void bgg_client::data::database::users_for_game(std::vector<bgg_client::data::us
   for (auto & user : list) {
     user_by_bggnick(user.getBggNick(), user);
   }
+}
+
+void bgg_client::data::database::wants_for_game(std::vector<user> &list, const bgg_client::data::game &game)
+{
+  std::string get_users_for_game_query;
+  get_users_for_game_query = "select bggnick from users where ' ' || wants || ' ' like '% " + std::to_string(game.getGameId())+ " %';";
+  list.clear();
+
+  sqlite3_exec(m_db, get_users_for_game_query.c_str(), users_for_game_callback, &list, 0);
+
+  for (auto & user : list) {
+    user_by_bggnick(user.getBggNick(), user);
+  }
+
 }
 
 int bgg_client::data::database::callback(int argc, char **argv, char **columns)

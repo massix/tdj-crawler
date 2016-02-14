@@ -18,6 +18,10 @@
           var descr_id = "#description_" + $(this).attr("id");
           $(descr_id).toggle("blind", options, 300);
         });
+        $(".wants-div").tooltip({
+                                show: { effect: "slideDown", delay: 250 },
+                                hide: { effect: "slideUp", delay: 250 }
+        });
         $("#game_search").autocomplete({
             minLength: 0,
             source: games,
@@ -85,18 +89,33 @@
         <div id="accordion">
           <!-- #BEGINTABLE games_accordion -->
           <h3 class="post-title" id="game_##game_anchor##">##game_name##
+            <div style="display: ##has_wants##;
+              height: 100%; margin-top: 3px; margin-bottom: 3px;
+              position: relative;
+              right: 0;
+              margin-right: 3px;
+              float: right;
+              color: rgb(61, 79, 93);
+              font-weight: 100;
+              font-size: 80%;
+              text-decoration: underline;
+              text-transform: uppercase;"
+              class="wants-div"
+              title="##wants_list##">
+              ##wants_total## user(s) want(s) to play.
+            </div>
             <div style="display: ##has_expansions##;
-                        height: 100%; margin-top: 3px; margin-bottom: 3px;
-                        position: relative;
-                        right: 0;
-                        margin-right: 3px;
-                        float: right;
-                        color: red;
-                        font-weight: 100;
-                        font-size: 80%;
-                        text-decoration: underline;
-                        text-transform: uppercase;">
-                        ##expansions_total## expansion(s) inside.
+              height: 100%; margin-top: 3px; margin-bottom: 3px;
+              position: relative;
+              right: 0;
+              margin-right: 20px;
+              float: right;
+              color: rgb(61, 79, 93);
+              font-weight: 100;
+              font-size: 80%;
+              text-decoration: underline;
+              text-transform: uppercase;">
+              ##expansions_total## expansion(s).
             </div>
           </h3>
           <div class="posts">

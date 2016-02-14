@@ -49,6 +49,11 @@ void bgg_client::response::initialize(const std::string &json_raw)
           fill_game(game, g);
           m_games.push_back(g);
         }
+        else if (game["wantToPlay"].bool_value()) {
+          bgg_client::data::game g;
+          fill_game(game, g);
+          m_wantsToPlay.push_back(g);
+        }
       }
     }
 
@@ -97,6 +102,7 @@ void bgg_client::response::reset()
 
   m_rawJson.clear();
   m_games.clear();
+  m_wantsToPlay.clear();
 }
 
 bgg_client::response::~response()
