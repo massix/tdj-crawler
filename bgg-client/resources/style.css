@@ -13,6 +13,14 @@ a:focus {
   text-decoration: underline;
 }
 
+.pure-link {
+  color: lightgray;
+}
+
+.pure-link:hover, .pure-link:focus {
+  text-decoration: none;
+}
+
 h3 {
   font-weight: 100;
 }

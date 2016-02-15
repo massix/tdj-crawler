@@ -198,6 +198,17 @@ int main(int argc, char *argv[])
       in_memory_db[game].wants_to_play = wants;
     }
 
+    // Fill the game objects in users' collections.
+    for (auto & user : users_vector) {
+      for (auto & game : user.accessCollection()) {
+        db.game_by_id(game.getGameId(), game);
+      }
+
+      for (auto & game : user.accessWantsToPlay()) {
+        db.game_by_id(game.getGameId(), game);
+      }
+    }
+
     synchro.unlock();
     std::cout << " --- " << all_games.size() << " total games in DB (expansions included)\n";
     std::cout << " --- " << no_expansions.size() << " total games in DB (no expansions)\n";
@@ -231,10 +242,12 @@ int main(int argc, char *argv[])
 
     std::srand((uint32_t) time(0));
     flateSetVar(flate, "random_greet", random_greeters[(std::rand() % random_greeters.size())].c_str());
+    synchro.lock();
 
     // Users and info in navigator
     for (auto const & user : users_vector) {
       flateSetVar(flate, "user_forumnick", user.getForumNick().c_str());
+      flateSetVar(flate, "user_bggnick", user.getBggNick().c_str());
       flateSetVar(flate, "user_countgames", std::to_string(user.getCollection().size()).c_str());
       flateDumpTableLine(flate, "users_list");
     }
@@ -243,10 +256,27 @@ int main(int argc, char *argv[])
     flateSetVar(flate, "db_last_update", ctime(&db_last_update));
     time_t next_update = db_last_update + std::atoi(config["update_db_timeout"].c_str());
     flateSetVar(flate, "db_next_update", ctime(&next_update));
-    synchro.lock();
+
+    bgg_client::data::collection show_games = no_expansions;
+
+    for (auto const & cgi : p_cgi) {
+      if (cgi.first == "user") {
+        show_games.clear();
+
+        for (auto const & user : users_vector) {
+          if (user.getBggNick() == cgi.second) {
+            for (auto const & game : user.getCollection()) {
+              if (not game.isExtension())
+                show_games.push_back(game);
+            }
+          }
+          else continue;
+        }
+      }
+    }
 
     uint32_t games_index(0);
-    for (auto const & g : no_expansions) {
+    for (auto const & g : show_games) {
       std::string string_owners;
       flateSetVar(flate, "game_name", g.getGameName().c_str());
       flateSetVar(flate, "game_description", g.getDescription().c_str());
