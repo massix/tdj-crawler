@@ -51,6 +51,9 @@ bool force_base_update(false);
 // Mutex for updater and clients
 std::mutex synchro;
 
+// True if the DB is currently updating
+bool db_updating(false);
+
 int main(int argc, char *argv[])
 {
 
@@ -92,6 +95,7 @@ int main(int argc, char *argv[])
     std::ifstream users_file(config["users_file"].c_str(), std::ifstream::in | std::ifstream::binary);
 
     synchro.lock();
+    db_updating = true;
     users_vector.clear();
     all_games.clear();
     no_expansions.clear();
@@ -209,6 +213,7 @@ int main(int argc, char *argv[])
       }
     }
 
+    db_updating = false;
     synchro.unlock();
     std::cout << " --- " << all_games.size() << " total games in DB (expansions included)\n";
     std::cout << " --- " << no_expansions.size() << " total games in DB (no expansions)\n";
@@ -242,8 +247,20 @@ int main(int argc, char *argv[])
 
     std::srand((uint32_t) time(0));
     flateSetVar(flate, "random_greet", random_greeters[(std::rand() % random_greeters.size())].c_str());
-    synchro.lock();
 
+    if (db_updating) {
+      flateSetVar(flate, "db_updating", "default");
+      char * buffer = flatePage(flate);
+      ret = std::string(buffer);
+      flateFreeMem(flate);
+
+      delete buffer;
+      return ret;
+    }
+
+    flateSetVar(flate, "db_updating", "none");
+
+    synchro.lock();
     // Users and info in navigator
     for (auto const & user : users_vector) {
       flateSetVar(flate, "user_forumnick", user.getForumNick().c_str());
