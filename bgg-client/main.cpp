@@ -385,7 +385,16 @@ int main(int argc, char *argv[])
     return ret;
   };
 
+  // Redirect servlet
+  todo::web::servlet_t redirect = [&](std::string const & p_page, todo::url::cgi_t const & p_cgi, todo::http_request & p_request)->std::string {
+    p_request.m_code = todo::http_request::kPermanentRedirect;
+    p_request["Location"] = "/games/";
+
+    return "Please visit <a href=\"/games/\">the only servlet</a> of this website.";
+  };
+
   server.insert(servlet["address"], games_servlet);
+  server.insert("/", redirect);
   server_ptr = &server;
 
   // Register signal handler as a lambda function.
