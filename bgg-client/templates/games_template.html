@@ -3,39 +3,55 @@
   <head>
     <meta charset="utf-8">
     <title>Trolls de Jeux - Les Jeux des Membres</title>
-    <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
-    <script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+    <script src="/resources/jquery-1.10.2.js"></script>
+    <script src="/resources/jquery.lazyload.js"></script>
+    <script src="/resources/jquery-ui.js"></script>
     <script>
       $(function() {
-        var games = [
-           <!-- #BEGINTABLE games_javascript_variables -->
-           {value: "##games_javascript_name##", anchor: "game_##games_javascript_anchor##"}##games_javascript_comma_needed##
-           <!-- #ENDTABLE games_javascript_variables -->
-        ];
-        $("#accordion").accordion({ heightStyle: "content", collapsible: true, active: false });
-        $(".expansion-title").click(function() {
-          var options = {};
-          var descr_id = "#description_" + $(this).attr("id");
-          $(descr_id).toggle("blind", options, 300);
-        });
-        $(".wants-div").tooltip({
-                                show: { effect: "slideDown", delay: 250 },
-                                hide: { effect: "slideUp", delay: 250 }
-        });
-        $("#game_search").autocomplete({
-            minLength: 0,
-            source: games,
-            select: function(event, ui) {
-              document.getElementById(ui.item.anchor).scrollIntoView();
-              $("#game_search").val("");
-          }
-        });
+          var games = [
+              <!-- #BEGINTABLE games_javascript_variables -->
+              {value: "##games_javascript_name##", anchor: "game_##games_javascript_anchor##"}##games_javascript_comma_needed##
+              <!-- #ENDTABLE games_javascript_variables -->
+          ];
+          $("#accordion").accordion({
+              heightStyle: "content",
+              collapsible: true,
+              active: false,
+              beforeActivate: function(event, ui) {
+                  ui.newPanel.find("img").first().trigger('appear');
+              }
+          });
+          $(".expansion-title").click(function() {
+              var options = {
+                  complete: function() {
+                      $(this).find("img").first().trigger('appear');
+                  }
+              };
+              var descr_id = "#description_" + $(this).attr("id");
+              $(descr_id).toggle("blind", options, 300);
+          });
+          $(".wants-div").tooltip({
+              show: { effect: "slideDown", delay: 250 },
+              hide: { effect: "slideUp", delay: 250 }
+          });
+          $("#game_search").autocomplete({
+              minLength: 0,
+              source: games,
+              select: function(event, ui) {
+                  document.getElementById(ui.item.anchor).scrollIntoView();
+                  $("#game_search").val("");
+              }
+          });
+          $("img.post-avatar").lazyload({
+              effect: "fadeIn",
+              failure_limit: 10
+          });
       });
     </script>
 
-    <script src="http://yui.yahooapis.com/combo?3.17.2/yui/yui-min.js"></script>
-    <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/pure-min.css">
-    <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/grids-responsive-min.css">
+    <script src="/resources/yui-min.js"></script>
+    <link rel="stylesheet" href="/resources/pure-min.css">
+    <link rel="stylesheet" href="/resources/grids-responsive-min.css">
     <link rel="stylesheet" href="/resources/jquery-ui.css">
     <link rel="stylesheet" href="/resources/style.css">
   </head>
@@ -131,8 +147,9 @@
               <span style="float: left;" class="ui-icon ui-icon-star"></span>&nbsp;Rank on BGG: ##game_rank##<br/>
             </p>
             <p class="post-description">
-            <img class="post-avatar" style="max-height: 150px" src="##game_thumbnail##" />
-            ##game_description## <br />
+              <img class="post-avatar" style="min-height: 80px; max-height: 150px" data-original="##game_thumbnail##" />
+              ##game_description## <br />
+            </p>
 
             <h1 style="display: ##has_expansions##" class="content-subhead">Expansions</h1>
             <div style="display: ##has_expansions##" class="expansions">
@@ -146,8 +163,9 @@
                 <p class="post-meta">Owned by: ##expansion_owners##</p>
                   <div class="expansion-description" id="description_##expansion_id##" style="display: none">
                   <p class="post-description">
-                  <img class="post-avatar" style="max-height: 150px" src="##expansion_thumbnail##" />
-                  ##expansion_description## <br />
+                    <img class="post-avatar" style="min-height: 80px; max-height: 150px" data-original="##expansion_thumbnail##" />
+                    ##expansion_description## <br />
+                  </p>
                 </div>
               </div>
               <!-- #ENDTABLE game_expansions -->
@@ -156,10 +174,8 @@
 
             <br />
             <a href="##game_url##">Find more on BoardGameGeek!</a>
-            </p>
           </div>
           <!-- #ENDTABLE games_accordion -->
-          
         </div>
       </div>
     </div>
