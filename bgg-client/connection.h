@@ -73,6 +73,7 @@ private:
   bgg_client::response * m_latest;
   std::string m_headersRaw;
   std::vector<header_line> m_parsedHeaders;
+  int m_sleepTimeout;
 
   bool relevant_information(std::string const & header, uint32_t & length, uint32_t & http_code);
 };

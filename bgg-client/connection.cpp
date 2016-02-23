@@ -33,7 +33,7 @@
 
 using namespace bgg_client;
 
-connection::connection(std::string const & url) : m_url(url)
+connection::connection(std::string const & url) : m_url(url), m_sleepTimeout(1)
 {
 }
 
@@ -121,11 +121,13 @@ bool connection::send(const bgg_client::request &request, bgg_client::response &
   }
 
   if (l_httpCode == 500) {
-    std::cerr << "500, sleeping a bit and retrying." << std::endl;
-    sleep(10);
+    std::cerr << " --- 500, sleeping for " << m_sleepTimeout << " seconds and retrying.\n";
+    sleep(m_sleepTimeout);
+    m_sleepTimeout = std::min(m_sleepTimeout + m_sleepTimeout, 10);
     return send(request, response);
   }
 
+  m_sleepTimeout = 1;
   full_response.resize(l_contentLength);
   response.initialize(full_response);
 
