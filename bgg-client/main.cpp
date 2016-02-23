@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
     exit(-1);
   }
 
-	bgg_client::connection connection(BGG_URL);
+  bgg_client::connection connection(BGG_URL);
   connection_ptr = &connection;
 
   bgg_client::data::database db(config["db_path"]);
@@ -387,10 +387,19 @@ int main(int argc, char *argv[])
 
   // Redirect servlet
   todo::web::servlet_t redirect = [&](std::string const & p_page, todo::url::cgi_t const & p_cgi, todo::http_request & p_request)->std::string {
-    p_request.m_code = todo::http_request::kPermanentRedirect;
-    p_request["Location"] = "/games/";
+    std::string ret;
 
-    return "Please visit <a href=\"/games/\">the only servlet</a> of this website.";
+    if (p_page.empty()) {
+      p_request.m_code = todo::http_request::kPermanentRedirect;
+      p_request["Location"] = "/games/";
+      ret = "Please visit <a href=\"/games/\">the only servlet</a> of this website.";
+    }
+    else {
+      p_request.m_code = todo::http_request::kTeaPot;
+      ret = "I'm a teapot.";
+    }
+
+    return ret;
   };
 
   server.insert(servlet["address"], games_servlet);
