@@ -302,6 +302,7 @@ int main(int argc, char *argv[])
       flateSetVar(flate, "game_url", game_url.c_str());
       flateSetVar(flate, "game_anchor", std::to_string(g.getGameId()).c_str());
       flateSetVar(flate, "game_rank", g.getRank()? std::to_string(g.getRank()).c_str() : "not available");
+      flateSetVar(flate, "game_published", g.getYearPublished()? std::to_string(g.getYearPublished()).c_str() : "too long ago");
       std::string game_authors;
 
       flateSetVar(flate, "games_javascript_name", g.getGameName().c_str());

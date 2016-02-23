@@ -74,7 +74,7 @@ void bgg_client::response::fill_game(const json11::Json &obj, bgg_client::data::
   game.setMinPlayers(obj["minPlayers"].int_value());
   game.setMaxPlayers(obj["maxPlayers"].int_value());
   game.setPlayingTime(obj["playingTime"].int_value());
-  game.setYearPublished(obj["yearPublished"].int_value());
+  game.setYearPublished(obj["yearPublished"].int_value() > 0 ? obj["yearPublished"].int_value() : 0);
   game.setRank(obj["rank"].int_value() > 0 ? obj["rank"].int_value() : 0);
   game.setIsExtension(obj["isExpansion"].bool_value());
   game.setGameName(obj["name"].string_value());
