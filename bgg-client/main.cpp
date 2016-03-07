@@ -54,9 +54,39 @@ std::mutex synchro;
 // True if the DB is currently updating
 bool db_updating(false);
 
+// Decode user's nickname
+std::string decode(std::string const & nick) {
+  std::string ret;
+
+  bool decoding(false);
+  char buffer[10];
+  int last_index(0);
+
+  for (auto const & c : nick) {
+    if (c == '%') {
+      decoding = true;
+      last_index = 0;
+      bzero(buffer, 10);
+    }
+    else if (c >= '0' and c <= '9' and decoding) {
+      buffer[last_index] = c;
+      last_index++;
+    }
+    else if (decoding) {
+      decoding = false;
+      ret += (char) strtol(buffer, nullptr, 16);
+      ret += c;
+    }
+    else {
+      ret += c;
+    }
+  }
+
+  return ret;
+}
+
 int main(int argc, char *argv[])
 {
-
   todo::config config("./conf/tdj-crawler.conf");
   if (not config.parse_config()) {
     std::cerr << "Unable to parse configuration file\n";
@@ -135,7 +165,7 @@ int main(int argc, char *argv[])
     for (auto & user : users_vector) {
       response.reset();
 
-      std::cout << " --- Fetching bgg user `" << user.getBggNick() << "' `" << user.getForumNick() << "'\n";
+      std::cout << " --- Fetching bgg user `" << decode(user.getBggNick()) << "' `" << user.getForumNick() << "'\n";
       connection.send(bgg_client::request::collection(user.getBggNick()), response);
       db.insert_update_user(user);
 
@@ -330,7 +360,7 @@ int main(int argc, char *argv[])
         std::string bgg_url = "http://boardgamegeek.com/user/" + user.getBggNick();
         string_owners += user.getForumNick() + " (" +
           "<a href=\"" + bgg_url + "\">" +
-          user.getBggNick() + "</a>), ";
+          decode(user.getBggNick()).c_str() + "</a>), ";
       }
 
       flateSetVar(flate, "has_wants", in_memory_db[g].wants_to_play.empty()? "none" : "inline");
@@ -363,7 +393,7 @@ int main(int argc, char *argv[])
           std::string bgg_url = "http://boardgamegeek.com/user/" + user.getBggNick();
           exp_owners_string += user.getForumNick() + " (" +
             "<a href=\"" + bgg_url + "\">" +
-            user.getBggNick() + "</a>), ";
+            decode(user.getBggNick()).c_str() + "</a>), ";
         }
 
         // Remove last ","
