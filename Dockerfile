@@ -5,7 +5,7 @@ EXPOSE 8081
 # Packages installation
 RUN set -x && \
     apt-get update && \ 
-    apt-get install -y git build-essential clang libsqlite3-dev
+    apt-get install -y git build-essential clang libsqlite3-dev expect-dev
 
 # Clone, build and deploy
 RUN set -x && \
@@ -43,4 +43,4 @@ RUN set -x && \
     sed -i 's/\.\/resources\//\/data\/resources\//g' /etc/tdj-crawler.conf && \
     sed -i 's/\.\/static\//\/data\/static\//g' /etc/tdj-crawler.conf
 
-CMD ["/usr/bin/tdj-crawler"]
+CMD ["unbuffer", "/usr/bin/tdj-crawler"]
